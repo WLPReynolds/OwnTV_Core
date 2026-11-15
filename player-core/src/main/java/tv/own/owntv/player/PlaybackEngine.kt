@@ -3,6 +3,9 @@ package tv.own.owntv.player
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
+/** Slightly Good TV fork: the A/V-sync nudge reaches this far either way (upstream: 5 s). */
+const val AUDIO_DELAY_LIMIT_MS = 20_000
+
 /**
  * What the player HUD needs from "whichever engine is currently playing" — mpv ([OwnTVPlayer], via
  * [MpvPlaybackEngine]) or the ExoPlayer live engine ([LivePreviewEngine] when a Live preview is promoted to
@@ -148,6 +151,8 @@ interface PlaybackEngine {
     val seekStepMs: StateFlow<Long> get() = DEFAULT_SEEK_STEP
     fun setSpeed(speed: Double) {}
     fun adjustAudioDelay(deltaMs: Int) {}
+    /** Set the A/V-sync offset to an exact value (ms), clamped to ±[AUDIO_DELAY_LIMIT_MS]. */
+    fun setAudioDelay(ms: Int) {}
     fun adjustSubtitleDelay(deltaMs: Int) {}
     fun resetSubtitleDelay() {}
     /** True when timing adjustment applies to the active subtitle on this engine. */
@@ -229,6 +234,7 @@ class MpvPlaybackEngine(private val p: OwnTVPlayer) : PlaybackEngine {
     override fun refreshStreamChips() = p.refreshStreamChips()
     override fun setSpeed(speed: Double) = p.setSpeed(speed)
     override fun adjustAudioDelay(deltaMs: Int) = p.adjustAudioDelay(deltaMs)
+    override fun setAudioDelay(ms: Int) = p.setAudioDelay(ms)
     override val audioDelayRemembered get() = p.audioDelayRemembered
     override fun toggleRememberAudioDelay() = p.toggleRememberAudioDelay()
     override fun previous() = p.previous()

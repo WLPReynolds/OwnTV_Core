@@ -2838,13 +2838,15 @@ class LivePreviewEngine(
     // cannot move it — the nudge is hidden rather than left doing nothing.
     override fun audioDelayAvailable() = !tunneledNow
 
-    override fun adjustAudioDelay(deltaMs: Int) {
-        applyAudioDelay((_audioDelayMs.value + deltaMs).coerceIn(-5_000, 5_000))
+    override fun adjustAudioDelay(deltaMs: Int) = setAudioDelay(_audioDelayMs.value + deltaMs)
+
+    override fun setAudioDelay(ms: Int) {
+        applyAudioDelay(ms.coerceIn(-AUDIO_DELAY_LIMIT_MS, AUDIO_DELAY_LIMIT_MS))
         // Remembering this channel already? The stored value follows the one on screen (as on mpv).
         if (_audioDelayRemembered.value) {
             val key = _currentMeta.value.contentKey ?: lastTunedUrl ?: return
-            val ms = _audioDelayMs.value
-            scope.launch { playbackPrefs.rememberAudioDelay(key, ms) }
+            val now = _audioDelayMs.value
+            scope.launch { playbackPrefs.rememberAudioDelay(key, now) }
         }
     }
 

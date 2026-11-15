@@ -1327,7 +1327,7 @@ class BackupManager(
                         val subtitleLang = if (e.has("sl")) e.optString("sl") else null
                         // v20–v22 files carry the delay per profile; since v44 it is the stream's, shared.
                         if (e.has("d")) {
-                            val delay = e.optInt("d").coerceIn(-5_000, 5_000)
+                            val delay = e.optInt("d").coerceIn(-20_000, 20_000)
                             runCatching {
                                 db.playbackQuirkDao().setAudioDelay(key, tv.own.owntv.core.player.sourceIdOfPinKey(key), tv.own.owntv.core.player.mediaTypeOfPinKey(key) ?: "LIVE", delay)
                             }
@@ -1353,7 +1353,7 @@ class BackupManager(
                         val type = e.optString("t").takeIf { it.isNotBlank() } ?: tv.own.owntv.core.player.mediaTypeOfPinKey(key) ?: "LIVE"
                         runCatching {
                             if (e.optBoolean("a", false)) dao.setAudioOnly(key, sourceId, type, true)
-                            if (e.has("d")) dao.setAudioDelay(key, sourceId, type, e.optInt("d").coerceIn(-5_000, 5_000))
+                            if (e.has("d")) dao.setAudioDelay(key, sourceId, type, e.optInt("d").coerceIn(-20_000, 20_000))
                         }
                     }
                 }

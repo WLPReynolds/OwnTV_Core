@@ -3768,14 +3768,17 @@ class OwnTVPlayer(
 
     /** In-player A/V-sync nudge for a badly-muxed file (positive = delay audio). Per-file: resets to the
      *  Settings default on the next item, so it never carries a wrong offset onto a good file. */
-    fun adjustAudioDelay(deltaMs: Int) {
-        applyAudioDelay((_audioDelayMs.value + deltaMs).coerceIn(-5_000, 5_000))
+    fun adjustAudioDelay(deltaMs: Int) = setAudioDelay(_audioDelayMs.value + deltaMs)
+
+    /** An exact offset, as typed by the user; the same limits and the same remember-follows rule. */
+    fun setAudioDelay(ms: Int) {
+        applyAudioDelay(ms.coerceIn(-AUDIO_DELAY_LIMIT_MS, AUDIO_DELAY_LIMIT_MS))
         // Already remembering this item? Then the stored number follows the one on screen, or the
         // toggle would keep claiming to remember a value the user has since nudged away from.
         if (_audioDelayRemembered.value) {
             val key = currentContentKey ?: currentUrl ?: return
-            val ms = _audioDelayMs.value
-            scope.launch { playbackPrefs.rememberAudioDelay(key, ms) }
+            val now = _audioDelayMs.value
+            scope.launch { playbackPrefs.rememberAudioDelay(key, now) }
         }
     }
 
