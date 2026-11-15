@@ -6,8 +6,9 @@ import org.junit.Test
 class AppIconTest {
 
     @Test
-    fun `stored names round-trip`() {
-        AppIcon.entries.forEach { assertEquals(it, AppIcon.fromStored(it.name)) }
+    fun `any stored name resolves to the single Slightly Good TV icon`() {
+        // Slightly Good TV fork: a restored backup from the original app can carry another colour.
+        AppIcon.entries.forEach { assertEquals(AppIcon.EGGSHELL, AppIcon.fromStored(it.name)) }
     }
 
     @Test

@@ -40,11 +40,16 @@ enum class AppIcon(
      * `owntv_mark_play` / `owntv_mark_play_small` draw it, so an app can tint it with the accent. Pixel's
      * large mark is dots (an app draws its triangle itself); its small mark is the card.
      */
-    fun isCard(small: Boolean): Boolean = small || this != PIXEL
+    fun isCard(small: Boolean): Boolean = this != EGGSHELL && (small || this != PIXEL)
 
     companion object {
         val DEFAULT = EGGSHELL
 
-        fun fromStored(value: String?): AppIcon = entries.firstOrNull { it.name == value } ?: DEFAULT
+        /**
+         * Slightly Good TV fork: there is one icon, so whatever was stored (a restored backup from the
+         * original app can carry another colour) resolves to [DEFAULT].
+         */
+        @Suppress("UNUSED_PARAMETER")
+        fun fromStored(value: String?): AppIcon = DEFAULT
     }
 }
