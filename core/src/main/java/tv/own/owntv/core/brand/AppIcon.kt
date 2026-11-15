@@ -49,7 +49,6 @@ enum class AppIcon(
          * Slightly Good TV fork: there is one icon, so whatever was stored (a restored backup from the
          * original app can carry another colour) resolves to [DEFAULT].
          */
-        @Suppress("UNUSED_PARAMETER")
         fun fromStored(value: String?): AppIcon = DEFAULT
     }
 }
