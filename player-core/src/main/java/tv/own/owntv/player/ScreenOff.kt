@@ -21,7 +21,8 @@ class ScreenOff(private val context: Context) {
     private val dpm get() = context.getSystemService(DevicePolicyManager::class.java)
     private val admin get() = ComponentName(context, Admin::class.java)
 
-    fun isAllowed(): Boolean = dpm?.isAdminActive(admin) == true
+    // Slightly Good TV fork: the device-admin receiver is no longer declared, so this is never granted.
+    fun isAllowed(): Boolean = false
 
     /** The system screen that asks for the grant; start it for a result and re-read [isAllowed]. */
     fun requestIntent(): Intent =
