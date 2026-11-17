@@ -11,6 +11,10 @@ import tv.own.owntv.core.model.MediaType
 
 @Dao
 interface CategoryDao {
+    /** One source's categories of a type in their stored order — the playlist-lists export. */
+    @Query("SELECT * FROM categories WHERE sourceId = :sourceId AND mediaType = :type ORDER BY sortOrder ASC, name ASC")
+    suspend fun forSource(sourceId: Long, type: MediaType): List<CategoryEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(categories: List<CategoryEntity>): List<Long>
 

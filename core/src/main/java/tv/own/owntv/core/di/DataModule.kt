@@ -419,6 +419,9 @@ val dataModule = module {
             get(),
         )
     }
+    // sourceDao, categoryDao, channelDao, movieDao, seriesDao, customizationStore — one playlist's
+    // category / channel lists out to a computer-side editor, and its edited hide / rename / order back.
+    single { tv.own.owntv.core.backup.PlaylistLists(get(), get(), get(), get(), get(), get()) }
     // profileDao, sourceDao, settings, launcherIntegration, openSubtitlesAccounts — creating,
     // editing, switching and deleting a profile, shared by both apps' profile gates.
     single { tv.own.owntv.core.profile.ProfileAvatarStore(androidContext()) }

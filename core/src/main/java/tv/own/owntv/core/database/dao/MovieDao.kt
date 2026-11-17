@@ -17,6 +17,9 @@ data class CategoryItemCount(val categoryId: Long, val itemCount: Int)
 
 @Dao
 interface MovieDao {
+    @Query("SELECT remoteId, name, categoryId FROM movies WHERE sourceId = :sourceId ORDER BY sortOrder ASC, name ASC")
+    suspend fun listRows(sourceId: Long): List<ListRow>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAllNormalized(movies: List<MovieEntity>)
 

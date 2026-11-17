@@ -17,6 +17,9 @@ import tv.own.owntv.core.database.entity.SeriesEntity
 /** Series browsing plus the Show → Season → Episode hierarchy. */
 @Dao
 interface SeriesDao {
+    @Query("SELECT remoteId, name, categoryId FROM series WHERE sourceId = :sourceId ORDER BY sortOrder ASC, name ASC")
+    suspend fun listRows(sourceId: Long): List<ListRow>
+
     // --- Series ---
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertSeriesNormalized(series: List<SeriesEntity>)

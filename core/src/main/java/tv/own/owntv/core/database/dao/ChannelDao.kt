@@ -38,6 +38,10 @@ data class ChannelWithWatchedAt(
  */
 @Dao
 interface ChannelDao {
+    /** Name, provider id and category of every channel of one source — the playlist-lists export. */
+    @Query("SELECT remoteId, name, categoryId FROM channels WHERE sourceId = :sourceId ORDER BY sortOrder ASC, name ASC")
+    suspend fun listRows(sourceId: Long): List<ListRow>
+
     /** Batch insert; the sync layer calls this in chunks (~500) inside a transaction. */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(channels: List<ChannelEntity>)
