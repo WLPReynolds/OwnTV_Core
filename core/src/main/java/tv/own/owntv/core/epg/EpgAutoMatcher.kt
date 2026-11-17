@@ -65,6 +65,10 @@ class EpgAutoMatcher(
         cust: SectionCustomizations,
         playlistIds: List<Long>,
         maxChannels: Int = MAX_CHANNELS,
+        /** Narrows the run to the channels this accepts (the category being viewed); null means every channel. */
+        only: ((ChannelEntity) -> Boolean)? = null,
+        /** Told how far the scoring has got: (channels scored so far, channels to score). Called off the main thread. */
+        onProgress: ((done: Int, total: Int) -> Unit)? = null,
     ): AutoMatchOutcome {
         val startedAt = SystemClock.elapsedRealtime()
         val candidates = guideCandidates.all()
@@ -76,14 +80,28 @@ class EpgAutoMatcher(
         val idsWithProgrammes = candidates.filter { it.hasProgrammes }
             .mapTo(HashSet()) { it.epgChannelId.trim().lowercase() }
         val hasProgrammesById = candidates.associate { it.epgChannelId to it.hasProgrammes }
-        val channels = channelDao.allForSources(playlistIds, maxChannels)
+        val channels = channelDao.allForSources(playlistIds, maxChannels).let { all -> if (only == null) all else all.filter(only) }
 
         return withContext(Dispatchers.Default) {
             val prepared = prepareWithProgrammesFirst(candidates)
             // Narrow before scoring: the scan is channels × candidates, which is millions of
             // comparisons on a full lineup and minutes of spinner on TV silicon if it runs unfiltered.
             val unmatched = channels.filter { needsMatch(it, cust, idsWithProgrammes) }
-            val best = EpgMatcher.bestEpgMatchBulk(unmatched.map { it.matchName }, prepared)
+            val names = unmatched.map { it.matchName }
+            val best = if (onProgress == null) {
+                EpgMatcher.bestEpgMatchBulk(names, prepared)
+            } else {
+                // In slices so progress can be reported between them. A slice is at least as big as the
+                // scorer's own parallel threshold, so each one still spreads across the cores.
+                val slice = maxOf(MIN_SLICE, names.size / PROGRESS_STEPS)
+                val scored = ArrayList<EpgMatcher.Result?>(names.size)
+                onProgress(0, names.size)
+                for (part in names.chunked(slice)) {
+                    scored.addAll(EpgMatcher.bestEpgMatchBulk(part, prepared))
+                    onProgress(scored.size, names.size)
+                }
+                scored
+            }
 
             val applied = mutableListOf<Pair<String, String>>()
             val review = mutableListOf<AutoMatchSuggestion>()
@@ -169,5 +187,11 @@ class EpgAutoMatcher(
     private companion object {
         /** Upper bound on channels scanned in one run. Matches what both apps already used. */
         const val MAX_CHANNELS = 20_000
+
+        /** Smallest slice scored between progress reports; the scorer only goes parallel from 400 names. */
+        const val MIN_SLICE = 400
+
+        /** Roughly how many progress updates a big run gives. */
+        const val PROGRESS_STEPS = 40
     }
 }
