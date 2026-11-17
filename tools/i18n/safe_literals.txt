@@ -213,6 +213,43 @@
 1	technical	core/src/main/java/tv/own/owntv/core/backup/DeviceIdentity.kt	SHA-256
 2	json	core/src/main/java/tv/own/owntv/core/backup/DeviceIdentity.kt	id
 2	json	core/src/main/java/tv/own/owntv/core/backup/DeviceIdentity.kt	name
+1	empty	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	\0
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	"$FORMAT_EDITS"
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	"$FORMAT_LISTS"
+5	protocol	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	$fromId:
+1	protocol	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	$sourceId:
+1	protocol	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	$sourceId:${remoteId ?: name}
+1	protocol	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	$toId:
+1	technical	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	-
+1	file-path	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	-lists.json
+1	regex	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	[^A-Za-z0-9._-]+
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	cat
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	catNames
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	catPos
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	categories
+1	preference-key	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	cust_${profileId}_${type.name}
+2	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	customizations
+2	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	format
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	hiddenCats
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	hiddenItems
+2	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	id
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	itemNames
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	items
+2	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	key
+3	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	name
+1	technical	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	no settings in the file
+2	technical	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	not a playlist edits file
+1	file-path	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	playlist
+2	technical	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	playlist $sourceId not found
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	profileId
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	sections
+1	protocol	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	slightlygood-edits
+1	protocol	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	slightlygood-lists
+2	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	source
+1	technical	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	the file does not say which playlist it came from
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	type
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	version
+1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	{}
 9	json	core/src/main/java/tv/own/owntv/core/backup/UserDataResolver.kt	at
 12	json	core/src/main/java/tv/own/owntv/core/backup/UserDataResolver.kt	ctx
 3	json	core/src/main/java/tv/own/owntv/core/backup/UserDataResolver.kt	dur
