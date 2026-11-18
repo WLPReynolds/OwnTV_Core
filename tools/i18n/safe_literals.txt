@@ -222,11 +222,13 @@
 1	protocol	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	$toId:
 1	technical	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	-
 1	file-path	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	-lists.json
+1	file-path	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	.part
 1	regex	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	[^A-Za-z0-9._-]+
 1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	cat
 1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	catNames
 1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	catPos
 1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	categories
+1	technical	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	could not finish the lists file
 1	preference-key	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	cust_${profileId}_${type.name}
 2	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	customizations
 2	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	format

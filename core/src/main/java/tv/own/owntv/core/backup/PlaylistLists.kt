@@ -1,5 +1,6 @@
 package tv.own.owntv.core.backup
 
+import android.util.JsonWriter
 import org.json.JSONArray
 import org.json.JSONObject
 import tv.own.owntv.core.customize.CustomizationStore
@@ -41,49 +42,53 @@ class PlaylistLists(
 
     suspend fun export(sourceId: Long, profileId: Long, dir: File): Result<File> = runCatching {
         val source = sourceDao.getById(sourceId) ?: error("playlist $sourceId not found")
-        val sections = JSONObject()
-        for (type in SECTIONS) {
-            val cats = categoryDao.forSource(sourceId, type)
-            val rows: List<ListRow> = when (type) {
-                MediaType.LIVE -> channelDao.listRows(sourceId)
-                MediaType.MOVIE -> movieDao.listRows(sourceId)
-                else -> seriesDao.listRows(sourceId)
-            }
-            val catKeyById = cats.associate { it.id to itemKey(sourceId, it.remoteId, it.name) }
-            sections.put(
-                type.name,
-                JSONObject()
-                    .put("categories", JSONArray().apply {
-                        cats.forEach { put(JSONObject().put("key", itemKey(sourceId, it.remoteId, it.name)).put("name", it.name)) }
-                    })
-                    .put("items", JSONArray().apply {
-                        rows.forEach {
-                            put(
-                                JSONObject()
-                                    .put("key", itemKey(sourceId, it.remoteId, it.name))
-                                    .put("name", it.name)
-                                    .put("cat", it.categoryId?.let(catKeyById::get) ?: ""),
-                            )
-                        }
-                    }),
-            )
-        }
         val stored = customize.exportAll()
-        val current = JSONObject()
-        for (type in SECTIONS) {
-            val raw = stored["cust_${profileId}_${type.name}"]
-            current.put(type.name, runCatching { JSONObject(raw ?: "{}") }.getOrDefault(JSONObject()))
-        }
-        val root = JSONObject()
-            .put("format", FORMAT_LISTS)
-            .put("version", 1)
-            .put("source", JSONObject().put("id", source.id).put("name", source.name).put("type", source.type.name))
-            .put("profileId", profileId)
-            .put("sections", sections)
-            .put("customizations", current)
         dir.mkdirs()
         val file = File(dir, safeName(source.name) + "-lists.json")
-        file.writeText(root.toString())
+        val partial = File(dir, file.name + ".part")
+        // Streamed straight to disk, one section at a time: a big playlist (hundreds of thousands of rows)
+        // must never be held as one JSON tree plus its string copy, which a TV's small heap cannot take.
+        JsonWriter(partial.bufferedWriter(Charsets.UTF_8)).use { w ->
+            w.beginObject()
+            w.name("format").value(FORMAT_LISTS)
+            w.name("version").value(1)
+            w.name("source").beginObject().name("id").value(source.id).name("name").value(source.name).name("type").value(source.type.name).endObject()
+            w.name("profileId").value(profileId)
+            w.name("sections").beginObject()
+            for (type in SECTIONS) {
+                val cats = categoryDao.forSource(sourceId, type)
+                val catKeyById = cats.associate { it.id to itemKey(sourceId, it.remoteId, it.name) }
+                w.name(type.name).beginObject()
+                w.name("categories").beginArray()
+                for (c in cats) w.beginObject().name("key").value(itemKey(sourceId, c.remoteId, c.name)).name("name").value(c.name).endObject()
+                w.endArray()
+                w.name("items").beginArray()
+                val rows: List<ListRow> = when (type) {
+                    MediaType.LIVE -> channelDao.listRows(sourceId)
+                    MediaType.MOVIE -> movieDao.listRows(sourceId)
+                    else -> seriesDao.listRows(sourceId)
+                }
+                for (r in rows) {
+                    w.beginObject()
+                        .name("key").value(itemKey(sourceId, r.remoteId, r.name))
+                        .name("name").value(r.name)
+                        .name("cat").value(r.categoryId?.let(catKeyById::get) ?: "")
+                        .endObject()
+                }
+                w.endArray()
+                w.endObject()
+            }
+            w.endObject()
+            w.name("customizations").beginObject()
+            for (type in SECTIONS) {
+                val raw = stored["cust_${profileId}_${type.name}"]
+                w.name(type.name).jsonValue(if (raw.isNullOrBlank()) "{}" else raw)
+            }
+            w.endObject()
+            w.endObject()
+        }
+        if (file.exists()) file.delete()
+        check(partial.renameTo(file)) { "could not finish the lists file" }
         file
     }
 
