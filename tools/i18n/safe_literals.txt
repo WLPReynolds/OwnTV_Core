@@ -251,7 +251,6 @@
 1	technical	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	the file does not say which playlist it came from
 1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	type
 1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	version
-1	json	core/src/main/java/tv/own/owntv/core/backup/PlaylistLists.kt	{}
 9	json	core/src/main/java/tv/own/owntv/core/backup/UserDataResolver.kt	at
 12	json	core/src/main/java/tv/own/owntv/core/backup/UserDataResolver.kt	ctx
 3	json	core/src/main/java/tv/own/owntv/core/backup/UserDataResolver.kt	dur

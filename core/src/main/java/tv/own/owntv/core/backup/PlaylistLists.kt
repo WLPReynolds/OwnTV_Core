@@ -82,7 +82,8 @@ class PlaylistLists(
             w.name("customizations").beginObject()
             for (type in SECTIONS) {
                 val raw = stored["cust_${profileId}_${type.name}"]
-                w.name(type.name).jsonValue(if (raw.isNullOrBlank()) "{}" else raw)
+                w.name(type.name)
+                writeJson(w, if (raw.isNullOrBlank()) JSONObject() else JSONObject(raw))
             }
             w.endObject()
             w.endObject()
@@ -170,4 +171,29 @@ class PlaylistLists(
             return out
         }
     }
+
+private fun writeJson(w: JsonWriter, v: Any?) {
+    when (v) {
+        is JSONObject -> {
+            w.beginObject()
+            val keys = v.keys()
+            while (keys.hasNext()) {
+                val k = keys.next()
+                w.name(k)
+                writeJson(w, v.opt(k))
+            }
+            w.endObject()
+        }
+        is JSONArray -> {
+            w.beginArray()
+            for (i in 0 until v.length()) writeJson(w, v.opt(i))
+            w.endArray()
+        }
+        null -> w.nullValue()
+        JSONObject.NULL -> w.nullValue()
+        is Boolean -> w.value(v)
+        is Number -> w.value(v)
+        else -> w.value(v.toString())
+    }
+}
 }
