@@ -4,4 +4,5 @@
     <string name="sync_remainder_note">The rest of the catalogue is still syncing in the background — you can start watching now. Progress shows in the small pill at the bottom of the screen.</string>
     <string name="sync_progress_preparing">Preparing catalogue</string>
     <string name="sync_progress_syncing">Syncing catalogue</string>
+    <string name="common_nav_favorites">Favourites</string>
 </resources>

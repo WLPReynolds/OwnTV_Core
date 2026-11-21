@@ -8,9 +8,9 @@ import org.junit.Test
 class MainSectionTest {
 
     @Test
-    fun `sports sits right after Live TV and is a browse item`() {
+    fun `sports sits right after Movies and is a browse item`() {
         val order = MainSection.browseOrder
-        assertEquals(order.indexOf(MainSection.LIVE_TV) + 1, order.indexOf(MainSection.SPORTS))
+        assertEquals(order.indexOf(MainSection.MOVIES) + 1, order.indexOf(MainSection.SPORTS))
         assertTrue(MainSection.SPORTS.isBrowse)
         assertTrue(MainSection.SPORTS in MainSection.allBrowse)
     }

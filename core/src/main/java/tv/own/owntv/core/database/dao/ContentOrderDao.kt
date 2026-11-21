@@ -66,6 +66,10 @@ interface ContentOrderDao {
     suspend fun exists(profileId: Long, type: MediaType, contextKey: String, itemId: Long): Boolean
 
     /** The items of one list that the user moved by hand (they keep a saved position). */
+    /** The saved positions of one list: the items moved in it, each with the place it was left at. */
+    @Query("SELECT * FROM content_order WHERE profileId = :profileId AND mediaType = :type AND contextKey = :contextKey")
+    suspend fun positions(profileId: Long, type: MediaType, contextKey: String): List<ContentOrderEntity>
+
     @Query("SELECT itemId FROM content_order WHERE profileId = :profileId AND mediaType = :type AND contextKey = :contextKey")
     suspend fun movedItemIds(profileId: Long, type: MediaType, contextKey: String): List<Long>
 

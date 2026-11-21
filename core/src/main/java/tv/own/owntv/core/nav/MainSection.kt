@@ -16,6 +16,9 @@ enum class MainSection(@param:StringRes val labelRes: Int) {
     HOME(R.string.common_nav_home),
     LIVE_TV(R.string.common_nav_live_tv),
 
+    /** The TV Guide narrowed to the profile's favourite channels, in their hand-made order. */
+    FAVOURITES(R.string.common_nav_favorites),
+
     /** Scores need no playlist, so DYNAMIC mode always shows it, like [HOME]. */
     SPORTS(R.string.sports_title),
     MOVIES(R.string.common_nav_movies),
@@ -39,9 +42,9 @@ enum class MainSection(@param:StringRes val labelRes: Int) {
 
     companion object {
         /** Fixed order of the browse items (Settings is pinned separately). */
-        val browseOrder: List<MainSection> = listOf(HOME, LIVE_TV, SPORTS, MOVIES, SERIES, DOWNLOADS, EPG)
+        val browseOrder: List<MainSection> = listOf(HOME, FAVOURITES, LIVE_TV, EPG, MOVIES, SPORTS, SERIES, DOWNLOADS)
 
-        /** All seven browse items — the default value, so a cold start shows a full nav rather than
+        /** All the browse items — the default value, so a cold start shows a full nav rather than
          *  flickering through an empty one before the first real emission lands. */
         val allBrowse: Set<MainSection> = browseOrder.toSet()
 
@@ -52,13 +55,13 @@ enum class MainSection(@param:StringRes val labelRes: Int) {
 
         /**
          * DYNAMIC-mode rule: which browse items show, given the active playlist's content caps.
-         * Home and Sports always; Live and Guide when there are channels; Movies/Series when their
+         * Home and Sports always; Favourites, Live and Guide when there are channels; Movies/Series when their
          * tables have rows; Downloads when Movies OR Series exist, because Live has no download.
          */
         fun dynamicVisible(hasLive: Boolean, hasMovies: Boolean, hasSeries: Boolean): Set<MainSection> = buildSet {
             add(HOME)
             add(SPORTS)
-            if (hasLive) { add(LIVE_TV); add(EPG) }
+            if (hasLive) { add(FAVOURITES); add(LIVE_TV); add(EPG) }
             if (hasMovies) add(MOVIES)
             if (hasSeries) add(SERIES)
             if (hasMovies || hasSeries) add(DOWNLOADS)

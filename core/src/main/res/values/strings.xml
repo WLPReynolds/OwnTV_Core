@@ -61,6 +61,8 @@
     <string name="common_nav_series">Series</string>
     <!-- Translators: Navigation label for the Downloads screen in the sidebar. Also used in download notifications. -->
     <string name="common_nav_downloads">Downloads</string>
+    <!-- Translators: Navigation label in the sidebar for the TV Guide showing only the user's favourite channels. -->
+    <string name="common_nav_favorites">Favorites</string>
     <!-- Translators: Navigation label for the TV Guide screen in the sidebar. -->
     <string name="common_nav_guide">TV Guide</string>
     <!-- Translators: The TV Guide place in the phone's bottom bar, a fifth of the screen wide. Keep it one short word if the full name is long (German: "Programm"). -->
