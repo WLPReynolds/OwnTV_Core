@@ -1057,17 +1057,21 @@ class OwnTVPlayer(
     private val _pictureDeband = MutableStateFlow(false)
     /** mpv's debanding (smooths stepped gradients and blocky shading) is on for this item. */
     val pictureDeband: StateFlow<Boolean> = _pictureDeband.asStateFlow()
-    private val _pictureSharpen = MutableStateFlow(false)
+    private val _pictureSharpen = MutableStateFlow(0)
     /** FFmpeg's contrast-adaptive sharpening is on for this item. */
-    val pictureSharpen: StateFlow<Boolean> = _pictureSharpen.asStateFlow()
+    val pictureSharpen: StateFlow<Int> = _pictureSharpen.asStateFlow()
     /** The copy path was taken for the picture filters, not by a rescue — so turning them off may leave it. */
     @Volatile private var copyForPicture = false
 
-    /** Turns the picture filters on or off for the item playing; both off is the default picture. */
-    fun setPictureFilters(deband: Boolean, sharpen: Boolean) {
+    /**
+     * Sets the picture filters for the item playing. [sharpen] is a level, 0 (off) to
+     * [PICTURE_SHARPEN_MAX] (the filter's full strength); both off is the default picture.
+     */
+    fun setPictureFilters(deband: Boolean, sharpen: Int) {
+        val level = sharpen.coerceIn(0, PICTURE_SHARPEN_MAX)
         _pictureDeband.value = deband
-        _pictureSharpen.value = sharpen
-        val any = deband || sharpen
+        _pictureSharpen.value = level
+        val any = deband || level > 0
         val it = item
         when {
             any && !it.forceCopyThisLoad && hwDecodingActive() -> { it.forceCopyThisLoad = true; copyForPicture = true }
@@ -1075,24 +1079,27 @@ class OwnTVPlayer(
         }
         mpvAsync {
             applyRenderConfig()
-            applyPictureFilterProps(deband, sharpen)
+            applyPictureFilterProps(deband, level)
         }
     }
 
-    private fun MPVLib.applyPictureFilterProps(deband: Boolean, sharpen: Boolean) {
+    private fun MPVLib.applyPictureFilterProps(deband: Boolean, sharpen: Int) {
         runCatching { setPropertyString("deband", if (deband) "yes" else "no") }
         runCatching { command(arrayOf("vf", "remove", PICTURE_SHARPEN_LABEL)) }
-        if (sharpen) runCatching { command(arrayOf("vf", "add", PICTURE_SHARPEN_VF)) }
+        if (sharpen > 0) {
+            val strength = (sharpen.toDouble() / PICTURE_SHARPEN_MAX).toString()
+            runCatching { command(arrayOf("vf", "add", PICTURE_SHARPEN_VF_HEAD + strength + PICTURE_SHARPEN_VF_TAIL)) }
+        }
         android.util.Log.i(TAG, "picture filters: deband=$deband sharpen=$sharpen vf=${getPropertyString("vf").orEmpty()}")
     }
 
     /** A new item starts on the default picture. */
     private fun resetPictureFilters() {
-        val wasOn = _pictureDeband.value || _pictureSharpen.value
+        val wasOn = _pictureDeband.value || _pictureSharpen.value > 0
         _pictureDeband.value = false
-        _pictureSharpen.value = false
+        _pictureSharpen.value = 0
         copyForPicture = false
-        if (wasOn) mpvAsync { applyPictureFilterProps(deband = false, sharpen = false) }
+        if (wasOn) mpvAsync { applyPictureFilterProps(deband = false, sharpen = 0) }
     }
 
     private fun mpvAsync(block: MPVLib.() -> Unit) {
@@ -5896,5 +5903,9 @@ internal data class ItemState(
 /** The label mpv keeps the picture sharpening filter under, so it can be taken out again by name. */
 private const val PICTURE_SHARPEN_LABEL = "@sgtvsharpen"
 
-/** FFmpeg's contrast-adaptive sharpening (AMD's CAS), light enough not to halo SD edges. */
-private const val PICTURE_SHARPEN_VF = "@sgtvsharpen:lavfi=[cas=strength=0.6]"
+/** FFmpeg's contrast-adaptive sharpening (AMD's CAS); its strength (0–1) goes between head and tail. */
+private const val PICTURE_SHARPEN_VF_HEAD = "@sgtvsharpen:lavfi=[cas=strength="
+private const val PICTURE_SHARPEN_VF_TAIL = "]"
+
+/** The sharpening scale's top step: full strength. Each step is a tenth. */
+const val PICTURE_SHARPEN_MAX = 10

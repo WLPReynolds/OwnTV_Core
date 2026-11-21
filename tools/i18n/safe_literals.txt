@@ -6477,7 +6477,7 @@
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	8MiB
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	://
 1	protocol	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	@sgtvsharpen
-1	protocol	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	@sgtvsharpen:lavfi=[cas=strength=0.6]
+1	protocol	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	@sgtvsharpen:lavfi=[cas=strength=
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	Android SDK built for
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	CC software-decode override ${if (on) "ON" else "OFF"} (height=${load.currentHeightPx}px)
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	CC track selected but software decode not viable (height=${load.currentHeightPx}px, gl=${!glUnsupported}) — captions may stay empty
@@ -6519,6 +6519,7 @@
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	VOD terminally failed on ExoPlayer ($exoError) — falling back to mpv
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	VOD terminally failed on mpv ($mpvError) — falling back to ExoPlayer
 1	regex	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	[a-z0-9_]+
+1	protocol	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	]
 1	protocol	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	add
 4	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	af
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	af=${getPropertyString("af").orEmpty().ifEmpty { "none" }}
