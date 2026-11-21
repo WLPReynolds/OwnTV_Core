@@ -6476,6 +6476,8 @@
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	7.1
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	8MiB
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	://
+1	protocol	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	@sgtvsharpen
+1	protocol	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	@sgtvsharpen:lavfi=[cas=strength=0.6]
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	Android SDK built for
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	CC software-decode override ${if (on) "ON" else "OFF"} (height=${load.currentHeightPx}px)
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	CC track selected but software decode not viable (height=${load.currentHeightPx}px, gl=${!glUnsupported}) — captions may stay empty
@@ -6517,6 +6519,7 @@
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	VOD terminally failed on ExoPlayer ($exoError) — falling back to mpv
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	VOD terminally failed on mpv ($mpvError) — falling back to ExoPlayer
 1	regex	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	[a-z0-9_]+
+1	protocol	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	add
 4	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	af
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	af=${getPropertyString("af").orEmpty().ifEmpty { "none" }}
 2	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	aid
@@ -6567,6 +6570,7 @@
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	curl-enabled
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	custom
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	cycle
+1	protocol	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	deband
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	decode check: hwdec-current='$hw' height=${h}px direct=${_directRender.value}
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	decodeGuard
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	decoder failure with no rescue rung left — surfacing decode error
@@ -6713,7 +6717,7 @@
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	msg-level
 2	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	mute
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	network-timeout
-25	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	no
+26	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	no
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	no-video (mpv, Live) — audio progressing but no video frame after ~${elapsedMs}ms
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	no-video (mpv, Live) — reconnect attempt ${item.liveStallReconnects}/$MAX_LIVE_RECONNECTS
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	no-video (mpv, Live) — reconnect budget exhausted, surfacing error
@@ -6735,6 +6739,7 @@
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	paused-for-cache=${getPropertyString("paused-for-cache")}
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	pendingStopEndFiles at cap $MAX_PENDING_STOP_CREDITS ($reason)
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	pgssub
+1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	picture filters: deband=$deband sharpen=$sharpen vf=${getPropertyString("vf").orEmpty()}
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	playback didn't start after retries
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	playback didn't start on hardware
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	playback didn't start — auto-retry ${item.autoRetries}/${maxRetries()} (full probe)
@@ -6750,6 +6755,7 @@
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	reconnect_at_eof=1,reconnect_on_http_error=[5xx,458],reconnect_max_retries=3
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	redirect
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	relative
+1	protocol	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	remove
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	replacement loadfile
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	rgba8
 2	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	s16
@@ -6807,6 +6813,7 @@
 2	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	vc1
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	vd-lavc-fast
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	vd-lavc-skiploopfilter
+3	protocol	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	vf
 4	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	vid
 2	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	video
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	video-aspect-override
@@ -6856,7 +6863,7 @@
 1	log	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	watchdog: archive loaded but produced no video
 4	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	width
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	xsub
-25	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	yes
+26	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	yes
 1	technical	player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt	ytdl
 1	technical	player-core/src/main/java/tv/own/owntv/player/PlaybackEngines.kt	DEPRECATION
 1	log	player-core/src/main/java/tv/own/owntv/player/PlaybackEngines.kt	OwnTV-Memory

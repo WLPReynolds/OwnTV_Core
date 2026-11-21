@@ -1050,6 +1050,51 @@ class OwnTVPlayer(
         android.util.Log.i(TAG, "audio filters: ${getPropertyString("af").orEmpty().ifEmpty { "none" }}")
     }
 
+    // ---- Picture filters (an experiment for poor SD channels) ----------------------------------------
+    // The direct decoder-to-surface path draws nothing of mpv's, so a filter needs the copy path
+    // (hwdec=mediacodec-copy + vo=gpu) — cheap at the SD sizes this is meant for. Both belong to the
+    // item playing: a new channel starts with them off.
+    private val _pictureDeband = MutableStateFlow(false)
+    /** mpv's debanding (smooths stepped gradients and blocky shading) is on for this item. */
+    val pictureDeband: StateFlow<Boolean> = _pictureDeband.asStateFlow()
+    private val _pictureSharpen = MutableStateFlow(false)
+    /** FFmpeg's contrast-adaptive sharpening is on for this item. */
+    val pictureSharpen: StateFlow<Boolean> = _pictureSharpen.asStateFlow()
+    /** The copy path was taken for the picture filters, not by a rescue — so turning them off may leave it. */
+    @Volatile private var copyForPicture = false
+
+    /** Turns the picture filters on or off for the item playing; both off is the default picture. */
+    fun setPictureFilters(deband: Boolean, sharpen: Boolean) {
+        _pictureDeband.value = deband
+        _pictureSharpen.value = sharpen
+        val any = deband || sharpen
+        val it = item
+        when {
+            any && !it.forceCopyThisLoad && hwDecodingActive() -> { it.forceCopyThisLoad = true; copyForPicture = true }
+            !any && copyForPicture -> { it.forceCopyThisLoad = false; copyForPicture = false }
+        }
+        mpvAsync {
+            applyRenderConfig()
+            applyPictureFilterProps(deband, sharpen)
+        }
+    }
+
+    private fun MPVLib.applyPictureFilterProps(deband: Boolean, sharpen: Boolean) {
+        runCatching { setPropertyString("deband", if (deband) "yes" else "no") }
+        runCatching { command(arrayOf("vf", "remove", PICTURE_SHARPEN_LABEL)) }
+        if (sharpen) runCatching { command(arrayOf("vf", "add", PICTURE_SHARPEN_VF)) }
+        android.util.Log.i(TAG, "picture filters: deband=$deband sharpen=$sharpen vf=${getPropertyString("vf").orEmpty()}")
+    }
+
+    /** A new item starts on the default picture. */
+    private fun resetPictureFilters() {
+        val wasOn = _pictureDeband.value || _pictureSharpen.value
+        _pictureDeband.value = false
+        _pictureSharpen.value = false
+        copyForPicture = false
+        if (wasOn) mpvAsync { applyPictureFilterProps(deband = false, sharpen = false) }
+    }
+
     private fun mpvAsync(block: MPVLib.() -> Unit) {
         val m = mpv ?: return
         mpvExecutor.execute { runCatching { m.block() } }
@@ -3162,6 +3207,7 @@ class OwnTVPlayer(
             sessionExternalSubs.clear() // genuinely new item → its own external-sub session
             applySubtitleDelay(0) // timing never carries onto another item/subtitle
             if (needReconfig) mpvAsync { applyRenderConfig() }
+            resetPictureFilters()
         }
         // AFTER the per-load defaults above, never before: this reads the item's own remembered zoom /
         // volume / audio delay and applies them over those defaults, so a reset that ran later would
@@ -5846,3 +5892,9 @@ internal data class ItemState(
      *  track stays empty under hwdec. While a CC track is selected we decode in software. */
     @field:Volatile var ccSoftwareOverride: Boolean = false,
 )
+
+/** The label mpv keeps the picture sharpening filter under, so it can be taken out again by name. */
+private const val PICTURE_SHARPEN_LABEL = "@sgtvsharpen"
+
+/** FFmpeg's contrast-adaptive sharpening (AMD's CAS), light enough not to halo SD edges. */
+private const val PICTURE_SHARPEN_VF = "@sgtvsharpen:lavfi=[cas=strength=0.6]"
