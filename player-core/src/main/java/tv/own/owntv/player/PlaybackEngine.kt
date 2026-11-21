@@ -183,6 +183,9 @@ interface PlaybackEngine {
 
 /** Adapts the full mpv player to [PlaybackEngine] (delegation only — keeps [OwnTVPlayer] untouched). */
 class MpvPlaybackEngine(private val p: OwnTVPlayer) : PlaybackEngine {
+    /** The mpv player itself, for what only mpv offers (the picture filters). */
+    val mpv: OwnTVPlayer get() = p
+
     override val isPlaying get() = p.isPlaying
     override val buffering get() = p.buffering
     override val error get() = p.error
