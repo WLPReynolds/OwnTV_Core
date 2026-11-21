@@ -1277,7 +1277,7 @@ class SettingsRepository(private val context: Context, private val localeStore: 
     }
 
     val navSize: Flow<NavSize> = prefsFlow { prefs ->
-        prefs[Keys.NAV_SIZE]?.let { runCatching { NavSize.valueOf(it) }.getOrNull() } ?: NavSize.COMPACT
+        prefs[Keys.NAV_SIZE]?.let { runCatching { NavSize.valueOf(it) }.getOrNull() } ?: NavSize.NORMAL
     }
 
     suspend fun setNavSize(size: NavSize) {
@@ -1326,7 +1326,7 @@ class SettingsRepository(private val context: Context, private val localeStore: 
     }
 
     val navLength: Flow<NavLength> = prefsFlow { prefs ->
-        prefs[Keys.NAV_LENGTH]?.let { runCatching { NavLength.valueOf(it) }.getOrNull() } ?: NavLength.FIT
+        prefs[Keys.NAV_LENGTH]?.let { runCatching { NavLength.valueOf(it) }.getOrNull() } ?: NavLength.FULL
     }
 
     suspend fun setNavLength(length: NavLength) {
@@ -3447,8 +3447,9 @@ class SettingsRepository(private val context: Context, private val localeStore: 
         internal fun stageDefaults(prefs: MutablePreferences) {
             val update = prefs[Keys.ACTIVE_PROFILE] != null
             prefs[Keys.NAV_STYLE] = NavStyle.DOCKED.name
-            prefs[Keys.NAV_SIZE] = NavSize.COMPACT.name
-            prefs[Keys.NAV_LENGTH] = NavLength.FIT.name
+            // Slightly Good TV: the menu shows its section names, full height, from the first start.
+            prefs[Keys.NAV_SIZE] = NavSize.NORMAL.name
+            prefs[Keys.NAV_LENGTH] = NavLength.FULL.name
             prefs[Keys.GLASS_SCOPE] = tv.own.owntv.core.theme.GlassConfig.ON_BITS
             prefs[Keys.GLASS_ALPHA] = GLASS_ALPHA_DEFAULT_PCT
             prefs[Keys.BG_STYLE] = tv.own.owntv.core.theme.BackgroundStyle.STAGE.name
