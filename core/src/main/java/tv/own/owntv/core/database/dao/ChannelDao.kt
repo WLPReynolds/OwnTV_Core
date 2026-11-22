@@ -150,6 +150,66 @@ interface ChannelDao {
     )
     suspend fun channelsForGuide(sourceIds: List<Long>, query: String, limit: Int): List<ChannelEntity>
 
+    // The guide's reads for one category, so switching category asks the database for that category
+    // alone (by the categoryId index) instead of reading every channel of the playlists and filtering:
+    // quick even on a 50,000-channel playlist, and no category falls outside the row limit. Each comes
+    // in the two forms above — only channels with guide data, or every channel (Show › Channels without
+    // guide) — with the same guide-data test and order.
+
+    /** [channelsWithGuide] for one provider folder. */
+    @Query(
+        "SELECT * FROM channels WHERE sourceId IN (:sourceIds) AND categoryId = :categoryId " +
+            "AND epgChannelId IS NOT NULL AND epgChannelId != '' " +
+            "AND (:query = '' OR name LIKE '%' || :query || '%') " +
+            "AND LOWER(TRIM(epgChannelId)) IN (" +
+            "  SELECT DISTINCT epgChannelId FROM epg_programmes WHERE sourceId IN (:sourceIds)" +
+            ") ORDER BY number ASC, name ASC LIMIT :limit",
+    )
+    suspend fun channelsWithGuideInCategory(sourceIds: List<Long>, categoryId: Long, query: String, limit: Int): List<ChannelEntity>
+
+    /** [channelsForGuide] for one provider folder. */
+    @Query(
+        "SELECT * FROM channels WHERE sourceId IN (:sourceIds) AND categoryId = :categoryId " +
+            "AND (:query = '' OR name LIKE '%' || :query || '%') ORDER BY number ASC, name ASC LIMIT :limit",
+    )
+    suspend fun channelsForGuideInCategory(sourceIds: List<Long>, categoryId: Long, query: String, limit: Int): List<ChannelEntity>
+
+    /** [channelsWithGuide] for a set of channels (Favourites, History, a custom category). Callers chunk [ids]. */
+    @Query(
+        "SELECT * FROM channels WHERE sourceId IN (:sourceIds) AND id IN (:ids) " +
+            "AND epgChannelId IS NOT NULL AND epgChannelId != '' " +
+            "AND (:query = '' OR name LIKE '%' || :query || '%') " +
+            "AND LOWER(TRIM(epgChannelId)) IN (" +
+            "  SELECT DISTINCT epgChannelId FROM epg_programmes WHERE sourceId IN (:sourceIds)" +
+            ") ORDER BY number ASC, name ASC",
+    )
+    suspend fun channelsWithGuideByIds(sourceIds: List<Long>, ids: List<Long>, query: String): List<ChannelEntity>
+
+    /** [channelsForGuide] for a set of channels (Favourites, History, a custom category). Callers chunk [ids]. */
+    @Query(
+        "SELECT * FROM channels WHERE sourceId IN (:sourceIds) AND id IN (:ids) " +
+            "AND (:query = '' OR name LIKE '%' || :query || '%') ORDER BY number ASC, name ASC",
+    )
+    suspend fun channelsForGuideByIds(sourceIds: List<Long>, ids: List<Long>, query: String): List<ChannelEntity>
+
+    /** [channelsWithGuide] for the Catch-up list. */
+    @Query(
+        "SELECT * FROM channels WHERE sourceId IN (:sourceIds) AND catchup = 1 " +
+            "AND epgChannelId IS NOT NULL AND epgChannelId != '' " +
+            "AND (:query = '' OR name LIKE '%' || :query || '%') " +
+            "AND LOWER(TRIM(epgChannelId)) IN (" +
+            "  SELECT DISTINCT epgChannelId FROM epg_programmes WHERE sourceId IN (:sourceIds)" +
+            ") ORDER BY number ASC, name ASC LIMIT :limit",
+    )
+    suspend fun channelsWithGuideCatchup(sourceIds: List<Long>, query: String, limit: Int): List<ChannelEntity>
+
+    /** [channelsForGuide] for the Catch-up list. */
+    @Query(
+        "SELECT * FROM channels WHERE sourceId IN (:sourceIds) AND catchup = 1 " +
+            "AND (:query = '' OR name LIKE '%' || :query || '%') ORDER BY number ASC, name ASC LIMIT :limit",
+    )
+    suspend fun channelsForGuideCatchup(sourceIds: List<Long>, query: String, limit: Int): List<ChannelEntity>
+
     /** Channels matching these remoteIds (Xtream stream ids) — to resolve smart-matched channels in bulk
      *  without loading the whole channel table. */
     @Query("SELECT * FROM channels WHERE sourceId IN (:sourceIds) AND remoteId IN (:remoteIds)")
