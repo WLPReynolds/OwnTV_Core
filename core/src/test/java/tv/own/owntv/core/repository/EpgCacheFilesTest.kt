@@ -58,6 +58,26 @@ class EpgCacheFilesTest {
     }
 
     @Test
+    fun `a promoted cache past the ttl is expired, a fresh one is not`() {
+        val now = 1_700_000_000_000L
+        val ttl = 24L * 60 * 60 * 1000
+        assertFalse(isExpiredEpgCache("epg_1.xmltv", now - 1000, now, ttl))
+        assertFalse(isExpiredEpgCache("epg_1.xmltv", now - (ttl - 1), now, ttl))
+        assertTrue("exactly at the TTL", isExpiredEpgCache("epg_1.xmltv", now - ttl, now, ttl))
+        assertTrue("past the TTL", isExpiredEpgCache("epg_1.xmltv", now - ttl - 1, now, ttl))
+        assertTrue("dated in the future", isExpiredEpgCache("epg_1.xmltv", now + 60_000, now, ttl))
+    }
+
+    @Test
+    fun `expiry only ever names promoted caches`() {
+        val now = 1_700_000_000_000L
+        val ttl = 24L * 60 * 60 * 1000
+        assertFalse("a temp is the orphan sweep's", isExpiredEpgCache("epg_1.xmltv.tmp", now - 10 * ttl, now, ttl))
+        assertFalse("not ours", isExpiredEpgCache("other.xmltv", now - 10 * ttl, now, ttl))
+        assertFalse("not a cache", isExpiredEpgCache("epg_1.json", now - 10 * ttl, now, ttl))
+    }
+
+    @Test
     fun `store ids parse from promoted names only`() {
         assertEquals(7L, epgCacheStoreId("epg_7.xmltv"))
         assertNull(epgCacheStoreId("epg_7.xmltv.tmp"))

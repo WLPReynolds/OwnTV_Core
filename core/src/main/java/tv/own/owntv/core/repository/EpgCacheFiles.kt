@@ -41,6 +41,18 @@ fun isOrphanedEpgTempCache(name: String, lastModified: Long, now: Long, ttlMs: L
     return now - lastModified > ttlMs
 }
 
+/**
+ * Whether a promoted cache is past its use and can go: older than the TTL (it is never read again —
+ * see [isUsableEpgCache]) or dated in the future. It was otherwise kept until the next guide sync
+ * replaced it, holding the whole feed on disk for nothing.
+ */
+fun isExpiredEpgCache(name: String, lastModified: Long, now: Long, ttlMs: Long): Boolean {
+    if (!name.startsWith(EPG_CACHE_PREFIX) || !name.endsWith(EPG_CACHE_SUFFIX)) return false
+    if (name.endsWith(EPG_CACHE_TEMP_SUFFIX)) return false
+    val age = now - lastModified
+    return age !in 0 until ttlMs
+}
+
 /** The store id encoded in a promoted cache file name, or null if it isn't one. */
 fun epgCacheStoreId(name: String): Long? {
     if (!name.startsWith(EPG_CACHE_PREFIX) || !name.endsWith(EPG_CACHE_SUFFIX)) return null

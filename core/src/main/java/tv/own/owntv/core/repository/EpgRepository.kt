@@ -69,16 +69,23 @@ class EpgRepository(
     private fun tempCacheFile(storeId: Long) = java.io.File(context.cacheDir, "epg_$storeId$EPG_CACHE_TEMP_SUFFIX")
 
     /**
-     * Drop temp caches abandoned by a killed process. Only files older than the cache TTL are touched:
-     * a *fresh* `.tmp` may belong to another source syncing right now, and deleting it would silently
-     * cost that sync its cache.
+     * Drop temp caches abandoned by a killed process, and promoted caches past the TTL (never read
+     * again, but otherwise kept until the next sync replaced them). Only temps older than the TTL are
+     * touched: a *fresh* `.tmp` may belong to another source syncing right now, and deleting it would
+     * silently cost that sync its cache.
      */
-    private fun sweepOrphanedTempCaches(now: Long) {
+    private fun sweepStaleCaches(now: Long) {
         runCatching {
-            context.cacheDir.listFiles()
-                ?.forEach { if (isOrphanedEpgTempCache(it.name, it.lastModified(), now, CACHE_TTL_MS)) it.delete() }
+            context.cacheDir.listFiles()?.forEach {
+                if (isOrphanedEpgTempCache(it.name, it.lastModified(), now, CACHE_TTL_MS) ||
+                    isExpiredEpgCache(it.name, it.lastModified(), now, CACHE_TTL_MS)
+                ) it.delete()
+            }
         }
     }
+
+    /** [sweepStaleCaches] for the app's start: file listing and deletes only, no database. */
+    suspend fun sweepStaleGuideCaches() = withContext(Dispatchers.IO) { sweepStaleCaches(System.currentTimeMillis()) }
 
     /**
      * Ensure every non-unique `epg_programmes` index exists — the Guide read-index
@@ -371,7 +378,7 @@ class EpgRepository(
         // conclude the missing channels simply have no schedule.
         val file = cacheFile(storeId)
         val tmpFile = tempCacheFile(storeId)
-        sweepOrphanedTempCaches(now)
+        sweepStaleCaches(now)
         suspend fun storeProgrammes(batch: List<EpgProgrammeEntity>) {
             if (batch.isEmpty()) return
             val startedAt = SystemClock.elapsedRealtime()
@@ -396,7 +403,10 @@ class EpgRepository(
                 eligible = globallyEmpty,
                 ftsOnly = false,
             ) {
-                tmpFile.outputStream().use { out ->
+                // Compressed on the way to disk: the whole feed as plain XML was ~80 MB a source. The
+                // parser reads either (it checks for the gzip signature), so a cache written before
+                // this change still reads.
+                GzipUnlessGzipped(tmpFile.outputStream().buffered()).use { out ->
                     http.get(url, userAgent, maxAttempts = EPG_DOWNLOAD_ATTEMPTS) { input ->
                         XmltvParser.parse(
                             TeeInputStream(input, out),
@@ -760,6 +770,7 @@ class EpgRepository(
         val keys = epgIds.map { it.trim().lowercase() }.filterTo(HashSet()) { it.isNotBlank() }
         if (keys.isEmpty()) return@withContext true
         val now = System.currentTimeMillis()
+        sweepStaleCaches(now)
         val from = now - WINDOW_BACK_MS; val to = now + guideAheadMs()
         val pastCutoffFor = pastCutoff(now, from)
         // Only promoted (complete) caches are eligible — an in-flight or abandoned `.xmltv.tmp` is
@@ -952,6 +963,45 @@ class EpgRepository(
             ?.sortedBy { it.name }
             ?.joinToString(",") { "${it.name}:${it.length()}:${it.lastModified()}" }
             .orEmpty()
+    }
+
+    /**
+     * Writes what it is given gzip-compressed, unless it already starts with the gzip signature (a feed
+     * served as .xml.gz arrives as it was sent): compressing that again would leave a file the parser
+     * unwraps only once. Decided on the first two bytes; anything shorter is written as it came.
+     */
+    private class GzipUnlessGzipped(private val sink: java.io.OutputStream) : java.io.OutputStream() {
+        private val head = java.io.ByteArrayOutputStream(2)
+        private var target: java.io.OutputStream? = null
+
+        private fun decide() {
+            val h = head.toByteArray()
+            val gzipped = h.size == 2 && h[0] == 0x1f.toByte() && h[1] == 0x8b.toByte()
+            // The fastest level: a sync runs on the TV's CPU while it parses, and XML still shrinks
+            // several-fold at it.
+            target = (if (gzipped) sink else object : java.util.zip.GZIPOutputStream(sink, 64 * 1024) {
+                init { def.setLevel(java.util.zip.Deflater.BEST_SPEED) }
+            }).also { it.write(h) }
+        }
+
+        override fun write(b: Int) {
+            target?.let { it.write(b); return }
+            head.write(b)
+            if (head.size() == 2) decide()
+        }
+
+        override fun write(b: ByteArray, off: Int, len: Int) {
+            var o = off; var n = len
+            while (target == null && n > 0) { write(b[o].toInt()); o++; n-- }
+            if (n > 0) target!!.write(b, o, n)
+        }
+
+        override fun flush() { target?.flush() ?: sink.flush() }
+
+        override fun close() {
+            if (target == null) { sink.write(head.toByteArray()); target = sink }
+            target!!.close() // a GZIPOutputStream finishes the stream and closes the sink
+        }
     }
 
     /** An InputStream that mirrors every byte it reads into [out] — lets us parse a download while caching it. */
