@@ -59,6 +59,7 @@ internal class SyncSupport(
         deleteByRemoteIds = { src, ids -> channelDao.deleteByRemoteIds(src, ids) },
         loadHashes = { channelDao.contentHashesForSource(it) },
         remoteIdsInCategories = { src, cats -> channelDao.remoteIdsInCategories(src, cats) },
+        categoryIdOf = { it.categoryId },
     )
 
     val movieAdapter = ContentAdapter<MovieEntity>(
@@ -77,6 +78,7 @@ internal class SyncSupport(
         countsByCategory = { src -> movieDao.countsByCategoryOnce(src).associate { it.categoryId to it.itemCount } },
         remoteIdsForCategory = { src, cat -> movieDao.remoteIdsForCategory(src, cat) },
         remoteIdsInCategories = { src, cats -> movieDao.remoteIdsInCategories(src, cats) },
+        categoryIdOf = { it.categoryId },
     )
 
     val seriesAdapter = ContentAdapter<SeriesEntity>(
@@ -95,7 +97,27 @@ internal class SyncSupport(
         countsByCategory = { src -> seriesDao.countsByCategoryOnce(src).associate { it.categoryId to it.itemCount } },
         remoteIdsForCategory = { src, cat -> seriesDao.remoteIdsForCategory(src, cat) },
         remoteIdsInCategories = { src, cats -> seriesDao.remoteIdsInCategories(src, cats) },
+        categoryIdOf = { it.categoryId },
     )
+
+    /**
+     * The categories of [s]/[type] a refresh leaves out: none unless the playlist is set to "Don't
+     * download hidden categories", then those hidden in EVERY profile that uses the playlist (one
+     * profile still showing a category keeps it downloaded). [idsByRemoteId] is this refresh's
+     * category map. New categories are not affected unless a profile hides them on arrival ("Hide new
+     * categories"), as before.
+     */
+    suspend fun skippedCategories(s: SourceEntity, type: MediaType, idsByRemoteId: Map<String, Long>): SkippedCategories {
+        if (s.id !in settings.skipHiddenCategorySources.first()) return SkippedCategories.NONE
+        val profileIds = sourceDao.profileIdsForSource(s.id)
+        if (profileIds.isEmpty()) return SkippedCategories.NONE
+        val hiddenEverywhere = profileIds
+            .map { customize.observe(it, type).first().hiddenCategories }
+            .reduce { a, b -> a intersect b }
+        if (hiddenEverywhere.isEmpty()) return SkippedCategories.NONE
+        val skipped = idsByRemoteId.filterKeys { remote -> "${s.id}:$remote" in hiddenEverywhere }
+        return SkippedCategories(skipped.keys, skipped.values.toSet())
+    }
 
     /**
      * Hash-diffed stable upsert: unchanged rows are skipped, changed rows keep their local id.
@@ -662,7 +684,15 @@ internal data class ContentAdapter<T>(
     val remoteIdsForCategory: (suspend (sourceId: Long, categoryId: Long) -> List<String>)? = null,
     /** RemoteIds across a set of categories — the prune scope after a per-category fallback. */
     val remoteIdsInCategories: (suspend (sourceId: Long, categoryIds: List<Long>) -> List<String>)? = null,
+    /** The row's category (db id) — what "Don't download hidden categories" filters on. */
+    val categoryIdOf: ((T) -> Long?)? = null,
 )
+
+/** The categories a refresh leaves out (see [SyncSupport.skippedCategories]): provider ids and db ids. */
+internal class SkippedCategories(val remoteIds: Set<String>, val ids: Set<Long>) {
+    fun isEmpty() = ids.isEmpty()
+    companion object { val NONE = SkippedCategories(emptySet(), emptySet()) }
+}
 
 /** What the DB already holds for one remote id: local row id, content hash, and provider position. */
 internal data class StoredRow(val id: Long, val contentHash: Int, val sortOrder: Int)

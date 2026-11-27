@@ -3383,6 +3383,7 @@
 1	preference-key	core/src/main/java/tv/own/owntv/core/settings/SettingsRepository.kt	settings_menu_order_${menu.name.lowercase()}
 1	preference-key	core/src/main/java/tv/own/owntv/core/settings/SettingsRepository.kt	settings_quick_pinned
 1	preference-key	core/src/main/java/tv/own/owntv/core/settings/SettingsRepository.kt	sheet_counts
+1	technical	core/src/main/java/tv/own/owntv/core/settings/SettingsRepository.kt	skip_hidden_category_sources
 1	preference-key	core/src/main/java/tv/own/owntv/core/settings/SettingsRepository.kt	software_decode_above_1080p
 1	preference-key	core/src/main/java/tv/own/owntv/core/settings/SettingsRepository.kt	sort_guide
 1	preference-key	core/src/main/java/tv/own/owntv/core/settings/SettingsRepository.kt	sort_live
@@ -5111,6 +5112,7 @@
 1	log	core/src/main/java/tv/own/owntv/core/sync/SyncSupport.kt	$label hash map loaded sourceId=$sourceId size=${it.byRemoteId.size} ms=${SystemClock.elapsedRealtime() - start}
 1	log	core/src/main/java/tv/own/owntv/core/sync/SyncSupport.kt	$label prune skipped sourceId=$sourceId reason=catalog_shrink stored=$stored stale=$stale
 1	technical	core/src/main/java/tv/own/owntv/core/sync/SyncSupport.kt	$label stream done phase=${phase.name} chunks=$chunkIndex totalUnique=${total[0]}
+1	technical	core/src/main/java/tv/own/owntv/core/sync/SyncSupport.kt	${s.id}:$remote
 1	log	core/src/main/java/tv/own/owntv/core/sync/SyncSupport.kt	SyncManager
 1	technical	core/src/main/java/tv/own/owntv/core/sync/SyncSupport.kt	categoriesAdded
 1	technical	core/src/main/java/tv/own/owntv/core/sync/SyncSupport.kt	categoriesRemoved
@@ -5142,11 +5144,13 @@
 1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$label fallback category start index=${index + 1}/${categories.size} id=${cat.id} name=${cat.name} beforeUnique=$before
 1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$label fallback end sourceId=${s.id} unique=${total[0]} ms=${SystemClock.elapsedRealtime() - fallbackStart}
 1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$label fallback prune scope sourceId=${s.id} categories=${categoryIds.size}/${outcome.attempted} complete=${outcome.complete}
-1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$label fallback start sourceId=${s.id} categories=${cats.size} bulkPartial=$truncatedAt
+1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$label fallback start sourceId=${s.id} categories=${fetchable.size} bulkPartial=$truncatedAt
 1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$label phase end sourceId=${s.id} unique=${total[0]} ms=${SystemClock.elapsedRealtime() - elapsedStart}
 1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$label phase start sourceId=${s.id} fresh=$freshSource
 1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$label prune skipped sourceId=${s.id} reason=fallback_no_complete_category
 1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$label prune skipped sourceId=${s.id} reason=incomplete_bulk
+1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$label removed ${gone.size} item(s) of skipped categories sourceId=${s.id}
+1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$label skipping ${skipped.ids.size} hidden categor(ies) sourceId=${s.id}
 1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$label: category ${cat.id} failed (${e.message}) — ${if (isServerError) "skipping category" else "ABORTING fallback"}
 1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$label: per-category fetch still truncating (panel likely ignores category_id) — stopping fallback after ${total[0]} items
 1	log	core/src/main/java/tv/own/owntv/core/sync/XtreamSyncer.kt	$phase import failed — keeping the rest of the import

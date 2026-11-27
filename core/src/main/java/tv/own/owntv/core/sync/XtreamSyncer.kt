@@ -239,8 +239,30 @@ internal class XtreamSyncer(
         // Category remote ids the bulk list actually referenced, so a category it skipped entirely can
         // be asked for directly before anything is pruned.
         val bulkCategoryIds = HashSet<String>()
-        val streams = p.makeStreams(categories.idsByRemoteId) { remoteId ->
+        val allStreams = p.makeStreams(categories.idsByRemoteId) { remoteId ->
             if (!remoteId.isNullOrBlank()) bulkCategoryIds.add(remoteId)
+        }
+        // "Don't download hidden categories": items of a skipped category never reach the inserter (nor
+        // the seen-id set, so a film the provider also lists under a kept category is stored there), the
+        // per-category requests leave those categories out, and dropSkipped removes what an earlier
+        // refresh stored for them. The categories themselves stay, so unhiding one brings it back at the
+        // next refresh.
+        val skipped = support.skippedCategories(s, p.type, categories.idsByRemoteId)
+        val categoryOf = p.adapter.categoryIdOf
+        val streams = if (skipped.isEmpty() || categoryOf == null) allStreams else XtreamStreams(
+            bulk = { add -> allStreams.bulk { item -> if (categoryOf(item) !in skipped.ids) add(item) } },
+            byCategory = { cat, add -> allStreams.byCategory(cat) { item -> if (categoryOf(item) !in skipped.ids) add(item) } },
+        )
+        val fetchable = if (skipped.isEmpty()) cats else cats.filterNot { it.id in skipped.remoteIds }
+        if (!skipped.isEmpty()) Log.i(TAG, "$label skipping ${skipped.ids.size} hidden categor(ies) sourceId=${s.id}")
+        // Before any prune: their rows go explicitly, so the prune's shrink guard judges only real staleness.
+        val dropSkipped: suspend () -> Unit = {
+            val inSkipped = p.adapter.remoteIdsInCategories
+            if (!freshSource && !skipped.isEmpty() && inSkipped != null) {
+                val gone = skipped.ids.toList().chunked(SyncSupport.QUERY_CHUNK).flatMap { inSkipped(s.id, it) }
+                gone.chunked(SyncSupport.QUERY_CHUNK).forEach { p.adapter.deleteByRemoteIds(s.id, it) }
+                Log.i(TAG, "$label removed ${gone.size} item(s) of skipped categories sourceId=${s.id}")
+            }
         }
         val insertFn: suspend (List<T>) -> UpsertStats = if (freshSource) {
             { rows -> support.insertFresh(rows, p.adapter) }
@@ -275,7 +297,7 @@ internal class XtreamSyncer(
             // A category that fails to fetch keeps the prune away entirely, for the same reason.
             var backfillIncomplete = false
             if (done) {
-                val missing = categoriesMissingFromBulk(cats, bulkCategoryIds)
+                val missing = categoriesMissingFromBulk(fetchable, bulkCategoryIds)
                 if (missing.isNotEmpty()) {
                     Log.i(TAG, "$label bulk omitted ${missing.size} categor(ies) ${missing.joinToString { it.id }} — fetching per-category")
                     val backfill = sliceByCategory(
@@ -289,6 +311,7 @@ internal class XtreamSyncer(
                     }
                 }
             }
+            if (done) dropSkipped()
             if (!freshSource && done && !backfillIncomplete) {
                 support.pruneRemoteIds(label, s.id, remoteIds, stats, p.adapter.remoteIdsForSource, p.adapter.deleteByRemoteIds)
                 support.pruneCategories(s.id, p.type, categories.seenRemoteIds, label, stats)
@@ -301,8 +324,8 @@ internal class XtreamSyncer(
             val fallbackStart = SystemClock.elapsedRealtime()
             val truncatedAt = total[0]
             Log.w(TAG, "$label bulk truncated sourceId=${s.id} itemsBeforeCutoff=$truncatedAt — recovering per-category")
-            Log.i(TAG, "$label fallback start sourceId=${s.id} categories=${cats.size} bulkPartial=$truncatedAt")
-            val outcome: FallbackOutcome = sliceByCategory(ctx, p.phase, label, progress, cats, insertFn, total, total[0], remoteIds, p.adapter.remoteIdOf) { cat, add ->
+            Log.i(TAG, "$label fallback start sourceId=${s.id} categories=${fetchable.size} bulkPartial=$truncatedAt")
+            val outcome: FallbackOutcome = sliceByCategory(ctx, p.phase, label, progress, fetchable, insertFn, total, total[0], remoteIds, p.adapter.remoteIdOf) { cat, add ->
                 streams.byCategory(cat, add)
             }
             Log.i(TAG, "$label fallback end sourceId=${s.id} unique=${total[0]} ms=${SystemClock.elapsedRealtime() - fallbackStart}")
@@ -319,6 +342,7 @@ internal class XtreamSyncer(
                     count = total[0],
                 ),
             )
+            dropSkipped()
             if (!freshSource) pruneAfterFallback(s, p, label, categories, outcome, remoteIds, stats)
         }
         progress.update(p.phase, total[0])

@@ -587,6 +587,8 @@ class SettingsRepository(private val context: Context, private val localeStore: 
         // Chosen flip-card icon colour (AppIcon.name). What the launcher shows is AppIconSwitcher.applied.
         val APP_ICON = stringPreferencesKey("app_icon")
         val NAV_MENU_HIDDEN = stringSetPreferencesKey("nav_menu_hidden")
+        /** Playlist ids whose refresh skips categories hidden in every profile (see [skipHiddenCategorySources]). */
+        val SKIP_HIDDEN_CATEGORY_SOURCES = stringSetPreferencesKey("skip_hidden_category_sources")
         // Stage navigation (TV): where the rail sits (NavStyle.name), what it shows (NavSize.name), its
         // length (NavLength.name), and how long the floating rail waits before hiding.
         val NAV_STYLE = stringPreferencesKey("nav_style")
@@ -1238,6 +1240,23 @@ class SettingsRepository(private val context: Context, private val localeStore: 
 
     suspend fun setAppIcon(icon: AppIcon) {
         context.dataStore.edit { it[Keys.APP_ICON] = icon.name }
+    }
+
+    /**
+     * Playlists set to "Don't download hidden categories": an Xtream refresh of one leaves out every
+     * category hidden in all the profiles that use it, and removes what an earlier refresh stored for
+     * them. Kept by playlist id, so deliberately not in the settings backup (ids differ on another
+     * device, and the switch would land on the wrong playlist).
+     */
+    val skipHiddenCategorySources: Flow<Set<Long>> =
+        prefsFlow { prefs -> prefs[Keys.SKIP_HIDDEN_CATEGORY_SOURCES].orEmpty().mapNotNullTo(HashSet()) { it.toLongOrNull() } }
+
+    suspend fun setSkipHiddenCategories(sourceId: Long, skip: Boolean) {
+        context.dataStore.edit { prefs ->
+            val now = prefs[Keys.SKIP_HIDDEN_CATEGORY_SOURCES].orEmpty()
+            val next = if (skip) now + sourceId.toString() else now - sourceId.toString()
+            if (next.isEmpty()) prefs.remove(Keys.SKIP_HIDDEN_CATEGORY_SOURCES) else prefs[Keys.SKIP_HIDDEN_CATEGORY_SOURCES] = next
+        }
     }
 
     /** Names of the `MainSection` browse items the user has hidden (STATIC mode). */
