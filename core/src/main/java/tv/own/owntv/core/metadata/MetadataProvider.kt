@@ -204,6 +204,13 @@ data class SeasonEpisode(val seasonNumber: Int, val episodeNumber: Int, val deta
 interface MetadataProvider {
 
     /**
+     * Why the most recent request failed, or null after a success. Shared across all calls, so it is
+     * only meaningful straight after a single deliberate request such as the Settings connection test.
+     */
+    val lastFailure: MetadataFetchFailure?
+        get() = null
+
+    /**
      * One page of the current daily Trending feed for [type] (MOVIE or TV), or null when
      * transport/auth/parsing fails. Pages are one-based; merge them with [TrendingFeedPage.merge].
      */

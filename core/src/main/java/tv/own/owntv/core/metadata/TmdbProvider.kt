@@ -42,7 +42,7 @@ class TmdbProvider(
         val lang = cfg.resolvedLanguage
         return when (cfg.tier) {
             MetadataConfig.Tier.SELF_HOST -> Endpoint(cfg.customServerUrl.trimEnd('/'), apiKey = null, language = lang)
-            MetadataConfig.Tier.OWN_KEY -> Endpoint(TMDB_DIRECT_BASE, apiKey = cfg.tmdbApiKey.trim(), language = lang)
+            MetadataConfig.Tier.OWN_KEY -> Endpoint(TMDB_DIRECT_BASE, apiKey = cleanTmdbApiKey(cfg.tmdbApiKey), language = lang)
             // Identity headers are sent on THIS TIER ONLY. A self-hoster's Worker has no such rule and a
             // user calling TMDB with their own key must never carry the maintainer's shared secret.
             MetadataConfig.Tier.DEFAULT_WORKER -> Endpoint(
@@ -80,9 +80,16 @@ class TmdbProvider(
      * behaves exactly like being offline — provider data still shows, and nothing is poisoned for the
      * next 7 days. Only the shared default Worker is metered; a user's own key or server is not.
      */
+    @Volatile
+    private var failure: MetadataFetchFailure? = null
+
+    override val lastFailure: MetadataFetchFailure?
+        get() = failure
+
     private suspend fun fetch(ep: Endpoint, url: String, label: String): String? {
         if (ep.metered && !budget.tryConsume()) {
             Log.w(TAG, "metadata allowance spent, skipping $label")
+            failure = MetadataFetchFailure.AllowanceUsed
             return null
         }
         // Dev-only accounting: the allowance counter in Settings shows a total, not what spent it. This
@@ -90,7 +97,12 @@ class TmdbProvider(
         // actually consumed my allowance". Compiled out of shipping builds.
         if (CoreBuildInfo.devTools && ep.metered) Log.i(SPEND_TAG, "spend: $label")
         return runCatching { http.getText(url, headers = ep.headers) }
-            .onFailure { Log.w(TAG, "TMDB $label failed: ${it.message}") }
+            .onSuccess { failure = null }
+            .onFailure {
+                Log.w(TAG, "TMDB $label failed: ${it.message}")
+                val host = runCatching { java.net.URI(ep.baseUrl).host }.getOrNull().orEmpty()
+                failure = classifyMetadataFailure(it, host, usingOwnKey = !ep.apiKey.isNullOrBlank())
+            }
             .getOrNull()
     }
 

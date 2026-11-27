@@ -1014,7 +1014,7 @@ class SettingsRepository(private val context: Context, private val localeStore: 
     val tmdbApiKey: Flow<String> = prefsFlow { it[Keys.TMDB_API_KEY] ?: "" }
 
     suspend fun setTmdbApiKey(key: String) {
-        context.dataStore.edit { it[Keys.TMDB_API_KEY] = key.trim() }
+        context.dataStore.edit { it[Keys.TMDB_API_KEY] = tv.own.owntv.core.metadata.cleanTmdbApiKey(key) }
     }
 
     /** Tier 3 — a custom TMDB-shaped metadata server base URL; blank = don't self-host. */
