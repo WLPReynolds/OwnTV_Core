@@ -794,6 +794,9 @@ internal class SyncCounters(
     private var liveProcessed = 0
     private var moviesProcessed = 0
     private var seriesProcessed = 0
+    private var liveSkipped = 0
+    private var moviesSkipped = 0
+    private var seriesSkipped = 0
 
     fun update(phase: SyncPhase, count: Int): ImportStage {
         val snapshot = synchronized(lock) {
@@ -801,6 +804,20 @@ internal class SyncCounters(
                 SyncPhase.LIVE -> liveProcessed = count
                 SyncPhase.MOVIES -> moviesProcessed = count
                 SyncPhase.SERIES -> seriesProcessed = count
+            }
+            snapshotLocked()
+        }
+        onProgress(snapshot)
+        return snapshot
+    }
+
+    /** Running count of the items [phase] has read past in skipped categories; see [ImportStage.skippedProcessed]. */
+    fun skipped(phase: SyncPhase, count: Int): ImportStage {
+        val snapshot = synchronized(lock) {
+            when (phase) {
+                SyncPhase.LIVE -> liveSkipped = count
+                SyncPhase.MOVIES -> moviesSkipped = count
+                SyncPhase.SERIES -> seriesSkipped = count
             }
             snapshotLocked()
         }
@@ -821,6 +838,7 @@ internal class SyncCounters(
         liveActive = liveActive,
         moviesActive = moviesActive,
         seriesActive = seriesActive,
+        skippedProcessed = liveSkipped + moviesSkipped + seriesSkipped,
     )
 }
 

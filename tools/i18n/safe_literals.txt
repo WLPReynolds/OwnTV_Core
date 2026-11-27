@@ -5389,6 +5389,7 @@
 1	preference-key	core/src/main/java/tv/own/owntv/core/sync/work/CatalogSyncWorker.kt	seriesActive
 1	preference-key	core/src/main/java/tv/own/owntv/core/sync/work/CatalogSyncWorker.kt	seriesProcessed
 1	log	core/src/main/java/tv/own/owntv/core/sync/work/CatalogSyncWorker.kt	sinceLastMs=${now - lastEmitAtMs}
+1	preference-key	core/src/main/java/tv/own/owntv/core/sync/work/CatalogSyncWorker.kt	skippedProcessed
 1	preference-key	core/src/main/java/tv/own/owntv/core/sync/work/CatalogSyncWorker.kt	sourceId
 1	technical	core/src/main/java/tv/own/owntv/core/sync/work/CatalogSyncWorker.kt	unknown
 1	log	core/src/main/java/tv/own/owntv/core/sync/work/ConnectionMeasurementWorker.kt	ConnectionMeasurement

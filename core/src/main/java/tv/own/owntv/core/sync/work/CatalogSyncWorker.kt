@@ -215,7 +215,7 @@ class CatalogSyncWorker(
             lastLiveProcessed = stage.liveProcessed
             lastMoviesProcessed = stage.moviesProcessed
             lastSeriesProcessed = stage.seriesProcessed
-            lastTotalProcessed = stage.totalProcessed
+            lastTotalProcessed = stage.progressProcessed
             if (stage.liveProcessed > 0) emittedLiveCount = true
             if (stage.moviesProcessed > 0) emittedMoviesCount = true
             if (stage.seriesProcessed > 0) emittedSeriesCount = true
@@ -229,12 +229,13 @@ class CatalogSyncWorker(
                 (now - lastEmitAtMs >= PROGRESS_MIN_INTERVAL_MS && stage.hasMeaningfulCountDelta())
 
         private fun ImportStage.hasMeaningfulCountDelta(): Boolean =
-            totalProcessed - lastTotalProcessed >= PROGRESS_ITEM_STEP
+            progressProcessed - lastTotalProcessed >= PROGRESS_ITEM_STEP
 
         private fun ImportStage.matchesLastEmit(): Boolean =
             liveProcessed == lastLiveProcessed &&
                 moviesProcessed == lastMoviesProcessed &&
-                seriesProcessed == lastSeriesProcessed
+                seriesProcessed == lastSeriesProcessed &&
+                progressProcessed == lastTotalProcessed
 
         private fun setProgress(data: Data) {
             setProgressAsync(data)
@@ -257,6 +258,7 @@ class CatalogSyncWorker(
         const val KEY_PROGRESS_LIVE_PROCESSED = "liveProcessed"
         const val KEY_PROGRESS_MOVIES_PROCESSED = "moviesProcessed"
         const val KEY_PROGRESS_SERIES_PROCESSED = "seriesProcessed"
+        const val KEY_PROGRESS_SKIPPED = "skippedProcessed"
         const val KEY_PROGRESS_LIVE_ACTIVE = "liveActive"
         const val KEY_PROGRESS_MOVIES_ACTIVE = "moviesActive"
         const val KEY_PROGRESS_SERIES_ACTIVE = "seriesActive"
@@ -298,4 +300,5 @@ private fun ImportStage.toWorkData(baseItemCount: Int): Data =
         CatalogSyncWorker.KEY_PROGRESS_LIVE_ACTIVE to liveActive,
         CatalogSyncWorker.KEY_PROGRESS_MOVIES_ACTIVE to moviesActive,
         CatalogSyncWorker.KEY_PROGRESS_SERIES_ACTIVE to seriesActive,
+        CatalogSyncWorker.KEY_PROGRESS_SKIPPED to skippedProcessed,
     )

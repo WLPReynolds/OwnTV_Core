@@ -196,6 +196,7 @@ class CatalogSyncScheduler(private val context: Context) {
                         liveActive = active.progress.getBoolean(CatalogSyncWorker.KEY_PROGRESS_LIVE_ACTIVE, false),
                         moviesActive = active.progress.getBoolean(CatalogSyncWorker.KEY_PROGRESS_MOVIES_ACTIVE, false),
                         seriesActive = active.progress.getBoolean(CatalogSyncWorker.KEY_PROGRESS_SERIES_ACTIVE, false),
+                        skippedProcessed = active.progress.getInt(CatalogSyncWorker.KEY_PROGRESS_SKIPPED, 0),
                     )
                 }
             }
@@ -238,9 +239,15 @@ sealed interface CatalogSyncState {
         val liveActive: Boolean,
         val moviesActive: Boolean,
         val seriesActive: Boolean,
+        /** See [tv.own.owntv.core.sync.ImportStage.skippedProcessed]. */
+        val skippedProcessed: Int = 0,
     ) : CatalogSyncState {
         val totalProcessed: Int
             get() = liveProcessed + moviesProcessed + seriesProcessed
+
+        /** What the re-sync percentage is worked out from: stored items plus those read past in skipped categories. */
+        val progressProcessed: Int
+            get() = totalProcessed + skippedProcessed
     }
 
     val isActive: Boolean

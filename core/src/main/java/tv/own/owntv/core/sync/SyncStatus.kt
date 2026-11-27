@@ -41,11 +41,22 @@ data class ImportStage(
      */
     val measuringStream: Int = 0,
     val measuringOf: Int = 0,
+    /**
+     * Items the provider listed in categories this playlist does not download ("Don't download
+     * hidden categories"). Not stored and not shown as counts, but read past all the same, so the
+     * re-sync percentage counts them: it is measured against what the playlist held before, and
+     * without them the first refresh after hiding categories stalls far short of 100%.
+     */
+    val skippedProcessed: Int = 0,
 ) {
     val measuringConnections: Boolean get() = measuringOf > 0
 
     val totalProcessed: Int
         get() = liveProcessed + moviesProcessed + seriesProcessed
+
+    /** [totalProcessed] plus [skippedProcessed]: what the re-sync percentage is worked out from. */
+    val progressProcessed: Int
+        get() = totalProcessed + skippedProcessed
 }
 
 /** Xtream / M3U progress is reported in these three phases. */

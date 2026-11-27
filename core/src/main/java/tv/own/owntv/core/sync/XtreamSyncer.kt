@@ -249,9 +249,16 @@ internal class XtreamSyncer(
         // next refresh.
         val skipped = support.skippedCategories(s, p.type, categories.idsByRemoteId)
         val categoryOf = p.adapter.categoryIdOf
+        // Items read past in skipped categories still move the re-sync percentage (see
+        // ImportStage.skippedProcessed), reported in steps so the stream is not slowed by it.
+        val skippedRead = intArrayOf(0)
+        val readPast: () -> Unit = {
+            skippedRead[0]++
+            if (skippedRead[0] % SKIPPED_PROGRESS_STEP == 0) progress.skipped(p.phase, skippedRead[0])
+        }
         val streams = if (skipped.isEmpty() || categoryOf == null) allStreams else XtreamStreams(
-            bulk = { add -> allStreams.bulk { item -> if (categoryOf(item) !in skipped.ids) add(item) } },
-            byCategory = { cat, add -> allStreams.byCategory(cat) { item -> if (categoryOf(item) !in skipped.ids) add(item) } },
+            bulk = { add -> allStreams.bulk { item -> if (categoryOf(item) !in skipped.ids) add(item) else readPast() } },
+            byCategory = { cat, add -> allStreams.byCategory(cat) { item -> if (categoryOf(item) !in skipped.ids) add(item) else readPast() } },
         )
         val fetchable = if (skipped.isEmpty()) cats else cats.filterNot { it.id in skipped.remoteIds }
         if (!skipped.isEmpty()) Log.i(TAG, "$label skipping ${skipped.ids.size} hidden categor(ies) sourceId=${s.id}")
@@ -346,6 +353,7 @@ internal class XtreamSyncer(
             if (!freshSource) pruneAfterFallback(s, p, label, categories, outcome, remoteIds, stats)
         }
         progress.update(p.phase, total[0])
+        if (skippedRead[0] > 0) progress.skipped(p.phase, skippedRead[0])
         p.timingKey?.let { stats.phaseTiming[it] = System.currentTimeMillis() - phaseStart }
         stats.processedCounts[p.countsKey] = total[0]
         Log.i(TAG, "$label phase end sourceId=${s.id} unique=${total[0]} ms=${SystemClock.elapsedRealtime() - elapsedStart}")
@@ -524,6 +532,8 @@ internal class XtreamSyncer(
          * this, and a panel that rate-limits answers 429.
          */
         private const val PHASE_CONCURRENCY = 3
+        /** How many skipped-category items pass between progress reports. */
+        private const val SKIPPED_PROGRESS_STEP = 500
 
         /**
          * The categories the bulk stream list never referenced. A panel can serve a complete-looking
